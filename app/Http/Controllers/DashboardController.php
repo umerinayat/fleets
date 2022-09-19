@@ -19,47 +19,61 @@ class DashboardController extends Controller
  
         $data = [];
 
-        $data['fleets'] = Fleet::orderBy('created_at', 'DESC')->get();
+        $fleets = Fleet::orderBy('created_at', 'DESC')->get();
 
-        $AllfyrRefulellings = Refuelling::whereDate('date', '>=', $startDate)
-        ->whereDate('date', '<=', $endDate)->get();
+        $readings = [];
 
-        $totalFuelConsumption = $AllfyrRefulellings->sum('fuel_added');
+        $data['fleets'] = $fleets;
 
-        $fyrRefulellings = Refuelling::whereDate('date', '>=', $startDate)
-        ->whereDate('date', '<=', $endDate)
-        ->where('isTankFilled', 1)
-        ->where('fleet_id', 1)
-        ->orderBy('id', 'ASC')
-        ->get();
+        foreach($fleets as $fleet) {
 
-        $hoursDifference = $fyrRefulellings->map(function($refuel, $key) use ( $fyrRefulellings ) {
-            if(isset($fyrRefulellings[ $key + 1])) {
-              
-               $h = abs((float) $refuel->machine_hours - (float) $fyrRefulellings[ $key + 1]->machine_hours);
+            $AllfyrRefulellings = Refuelling::whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
+            ->where('fleet_id', $fleet->id)
+            ->get();
 
-                return [
-                    'litterPerHour' =>  $h == 0 ? 0 : $fyrRefulellings[ $key + 1]->fuel_added /  $h,
-                    'l' => $fyrRefulellings[ $key + 1]->fuel_added,
-                    'h' => $h
-                ];
-            }
-        });
+            $totalFuelConsumption = $AllfyrRefulellings->sum('fuel_added');
 
-        unset($hoursDifference[count($hoursDifference) - 1]);
+            $fyrRefulellings = Refuelling::whereDate('date', '>=', $startDate)
+            ->whereDate('date', '<=', $endDate)
+            ->where('isTankFilled', 1)
+            ->where('fleet_id', $fleet->id)
+            ->orderBy('id', 'ASC')
+            ->get();
 
-       $littersPerHours = $hoursDifference->pluck('litterPerHour');
+            $hoursDifference = $fyrRefulellings->map(function($refuel, $key) use ( $fyrRefulellings ) {
+                if(isset($fyrRefulellings[ $key + 1])) {
+                  
+                   $h = abs((float) $refuel->machine_hours - (float) $fyrRefulellings[ $key + 1]->machine_hours);
+    
+                    return [
+                        'litterPerHour' =>  $h == 0 ? 0 : $fyrRefulellings[ $key + 1]->fuel_added /  $h,
+                        'l' => $fyrRefulellings[ $key + 1]->fuel_added,
+                        'h' => $h
+                    ];
+                }
+            });
 
-        // dd( count( $littersPerHours),  $hoursDifference);
+            unset($hoursDifference[count($hoursDifference) - 1]);
 
-        $operatingHours = $fyrRefulellings->max('machine_hours') - $fyrRefulellings->min('machine_hours');
-        $currentMachineReading = $fyrRefulellings->max('machine_hours');
+            $littersPerHours = $hoursDifference->pluck('litterPerHour');
 
-        $data['operatingHours'] = $operatingHours;
-        $data['currentMachineReading'] = $currentMachineReading;
-        $data['totalFuelConsumption'] = $totalFuelConsumption;
-        $data['littersPerHours'] = $littersPerHours->avg();
-       
+            
+            $operatingHours = $fyrRefulellings->max('machine_hours') - $fyrRefulellings->min('machine_hours');
+            $currentMachineReading = $fyrRefulellings->max('machine_hours');
+
+            array_push($readings, [
+                'fleet_name'   => $fleet->name,
+                'fleet_number' => $fleet->fleet_number,
+                'operatingHours' => $operatingHours,
+                'currentMachineReading' => $currentMachineReading,
+                'totalFuelConsumption' => $totalFuelConsumption,
+                'littersPerHours' => $littersPerHours->avg(),
+            ]);
+        }
+
+        $data['readings'] = $readings;
+        
         return view('dashboard', $data);
     }
 }

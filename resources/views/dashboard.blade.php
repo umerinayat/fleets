@@ -27,13 +27,15 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    @foreach($readings as $reading)
                                     <tr style="text-align: center">
-                                        <td>44</td>
-                                        <td>{{number_format($littersPerHours, '2')}}</td>
-                                        <td>{{$totalFuelConsumption}}</td>
-                                        <td>{{$operatingHours}}</td>
-                                        <td>{{$totalFuelConsumption}}</td>
+                                        <td>{{ $reading['fleet_number'] }}</td>
+                                        <td>{{ number_format($reading['littersPerHours'], '2') }}</td>
+                                        <td>{{ $reading['totalFuelConsumption'] }}</td>
+                                        <td>{{ $reading['operatingHours'] }}</td>
+                                        <td>{{ $reading['totalFuelConsumption'] }}</td>
                                     </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
