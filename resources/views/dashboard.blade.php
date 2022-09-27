@@ -1,4 +1,13 @@
 <x-app-layout>
+
+    @push('styles')
+    <style> 
+         input[type=date] {
+            height: 32px;
+        }
+    </style>
+    @endpush
+
     <x-slot name="header">
 
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
@@ -16,7 +25,21 @@
                     <div class="bg-white border-b border-gray-200 p-2 mb-3">
                             <span class="text-gray-600/80">Fleets Refulling Readings:</span>
                         </div>
-                            <table id="fleetsReadingDt" style="width: 100%">
+                            <div>
+                                <div>Select Date:</div>
+                                <input type="date" id="startDate">
+                                <input type="date" id="endDate">
+                                <select name="sfleet" class="fleets-selection" id="sfleet">
+                                        <option></option>
+                                        @foreach($fleets as $fleet)
+                                        <option value="{{ $fleet->id }}">
+                                            <div class="name">{{$fleet->fleet_number}}-{{$fleet->name}}</div>
+                                        </option>
+                                        @endforeach
+                                </select>
+                                <button class="btn" id="filterBtn">Reset</button>
+                            </div>
+                            <table id="fleetsReadingDt" class="mt-4" style="width: 100">
                                 <thead>
                                     <tr>
                                         <th>Fleet Number</th>
@@ -27,22 +50,14 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach($readings as $reading)
-                                    <tr style="text-align: center">
-                                        <td>{{ $reading['fleet_number'] }}</td>
-                                        <td>{{ number_format($reading['littersPerHours'], '2') }}</td>
-                                        <td>{{ $reading['totalFuelConsumption'] }}</td>
-                                        <td>{{ $reading['operatingHours'] }}</td>
-                                        <td>{{ $reading['totalFuelConsumption'] }}</td>
-                                    </tr>
-                                    @endforeach
+                          
                                 </tbody>
                             </table>
                         </div>
                         <div class="flex flex-col justify-self-end bg-white rounded-lg shadow-md" style="width: 350px">
                             <div class="bg-white border-b border-gray-200 p-2">
                              
-                                <span class="text-gray-600/80">  Add Refuelling:</span>
+                                <span class="text-gray-600/80">Add Refuelling:</span>
                             </div>
 
                             <form method="POST" class="p-6" action="{{ route('refuelling.store') }}">
@@ -51,7 +66,8 @@
                                 <!-- fleet selection -->
                                 <div>
                                     <x-label for="fleet" :value="__('Select Fleet: *')" />
-                                    <select name="fleet_id" id="fleets-selection">
+                                    <select name="fleet_id" class="fleets-selection" id="fleets-selection">
+                                        <option></option>
                                         @foreach($fleets as $fleet)
                                         <option value="{{ $fleet->id }}">
                                             <div class="name">{{$fleet->fleet_number}}-{{$fleet->name}}</div>
@@ -127,6 +143,39 @@
     </div>
     @push('scripts')
     <script>
+
+        const startDate = document.getElementById('startDate');
+        const endDate = document.getElementById('endDate');
+        const sfleet = document.getElementById('sfleet');
+        const filterBtn = document.getElementById('filterBtn');
+        let isFilter = false;
+          
+        startDate.value = moment().startOf('quarter').subtract(1, 'year').format('YYYY-MM-DD');
+        endDate.value = moment().startOf('quarter').subtract(1, 'days').format('YYYY-MM-DD');
+
+        filterBtn.addEventListener('click', function(event) {
+            $("#sfleet").val('');
+            $("#sfleet").trigger('change.select2');
+            startDate.value = moment().startOf('quarter').subtract(1, 'year').format('YYYY-MM-DD');
+            endDate.value = moment().startOf('quarter').subtract(1, 'days').format('YYYY-MM-DD');
+            $('#fleetsReadingDt').DataTable().ajax.reload();
+        });
+
+        startDate.addEventListener('change', function() {
+            $('#fleetsReadingDt').DataTable().ajax.reload();
+        });
+
+        endDate.addEventListener('change', function() {
+            $('#fleetsReadingDt').DataTable().ajax.reload();
+        });
+
+       
+
+        $('#sfleet').on('select2:select', function (e) {
+            $('#fleetsReadingDt').DataTable().ajax.reload();
+        });
+
+
         const fleetsJson = '{!! $fleets !!}';
 
         const fleets = JSON.parse(fleetsJson);
@@ -150,8 +199,61 @@
         };
 
         $("#fleets-selection").select2({
-            templateResult: formatState
+            templateResult: formatState,
+            placeholder: 'Select a fleet'
         });
+
+        $('#sfleet').select2({
+            templateResult: formatState,
+            placeholder: 'Select a fleet'
+        });
+
+        $(function() {
+            var table = $('#fleetsReadingDt').DataTable({
+                processing: true,
+                serverSide: true,
+                "bPaginate": false,
+                "bLengthChange": false,
+                "searching": false,
+                ajax: { 
+                    url: "{{ route('dashboard') }}",
+                    "data": function ( d ) {
+                        d.sdate = startDate.value;
+                        d.edate = endDate.value;
+                        d.sfleet = sfleet.value
+                    },
+                },
+                columns: [
+                    // {
+                    //     data: 'fleet_name',
+                    //     name: 'fleet_name'
+                    // },
+                    {
+                        data: 'fleet_number',
+                        name: 'fleet_number'
+                    },
+                    {
+                        data: 'littersPerHours',
+                        name: 'littersPerHours'
+                    },
+                    {
+                        data: 'totalFuelConsumption',
+                        name: 'totalFuelConsumption'
+                    },
+                    {
+                        data: 'operatingHours',
+                        name: 'operatingHours'
+                    },
+                    {
+                        data: 'currentMachineReading',
+                        name: 'currentMachineReading'
+                    }
+                   
+                   
+                ]
+            });
+        });
+
     </script>
     @endpush
 </x-app-layout>

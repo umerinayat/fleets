@@ -15,12 +15,19 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @role('admin') 
                     <x-nav-link :href="route('fleets.index')" :active="request()->routeIs('fleets.index')">
                         {{ __('Fleets') }}
                     </x-nav-link>
+                    @endrole
                     <x-nav-link :href="route('refuelling.index')" :active="request()->routeIs('refuelling.index')">
                         {{ __('Refuellings') }}
                     </x-nav-link>
+                    @role('admin') 
+                    <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                        {{ __('Users') }}
+                    </x-nav-link>
+                    @endrole
                 </div>
             </div>
 

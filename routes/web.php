@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FleetController;
 use App\Http\Controllers\RefuellingController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -24,5 +25,6 @@ Route::middleware(['auth'])->group(function () {
     
     Route::resource('fleets', FleetController::class);
     Route::resource('refuelling', RefuellingController::class);
+    Route::resource('users', UserController::class);
 });
 

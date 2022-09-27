@@ -23,7 +23,10 @@ class FleetController extends Controller
             $fleets = Fleet::select('id','fleet_number','name', 'image_url');
             return Datatables::of($fleets)->addIndexColumn()
                 ->addColumn('action', function($row){
-                    $editIcon = '<i class="fa-solid fa-pen edit-icon icon"></i><i class="fa-solid fa-trash trash-icon icon"></i>';
+                    $id =  $row->id;
+                    $token = csrf_token();
+                    $formId = "'form'";
+                    $editIcon = '<i class="fa-solid fa-pen edit-icon icon"></i><form style="display:inline" method="post" action="/fleets/'.$id.'"><i onclick="this.closest('.$formId.').submit();" class="fa-solid fa-trash trash-icon icon"></i><input type="hidden" name="_token" value="'.$token.'"><input type="hidden" name="_method" value="delete"></form>';
                     return $editIcon;
                 })
                 ->addColumn('image', function($row){
@@ -113,7 +116,8 @@ class FleetController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy(Fleet $fleet)
-    {
-        //
+    {   
+        $fleet->delete();
+        return redirect('/fleets');
     }
 }
