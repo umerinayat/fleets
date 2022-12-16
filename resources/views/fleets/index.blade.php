@@ -83,7 +83,13 @@
     @push('scripts')
     <script>
         $(function() {
-            var table = $('#fleetsDt').DataTable({
+            var table = $('#fleetsDt')
+            // .on( 'init.dt', function () {
+            //     $('#fleetsDt .edit-icon').on('click', function(event) {
+            //         const fleetId = $(this).data('id');
+            //     });
+            // })
+            .DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: "{{ route('fleets.index') }}",

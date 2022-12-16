@@ -26,7 +26,7 @@ class FleetController extends Controller
                     $id =  $row->id;
                     $token = csrf_token();
                     $formId = "'form'";
-                    $editIcon = '<i class="fa-solid fa-pen edit-icon icon"></i><form style="display:inline" method="post" action="/fleets/'.$id.'"><i onclick="this.closest('.$formId.').submit();" class="fa-solid fa-trash trash-icon icon"></i><input type="hidden" name="_token" value="'.$token.'"><input type="hidden" name="_method" value="delete"></form>';
+                    $editIcon = '<i class="fa-solid fa-pen edit-icon icon" data-id="'.$id.'"></i><form style="display:inline" method="post" action="/fleets/'.$id.'"><i onclick="this.closest('.$formId.').submit();" class="fa-solid fa-trash trash-icon icon"></i><input type="hidden" name="_token" value="'.$token.'"><input type="hidden" name="_method" value="delete"></form>';
                     return $editIcon;
                 })
                 ->addColumn('image', function($row){
