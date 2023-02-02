@@ -75,7 +75,7 @@
                     <!-- fleet name -->
                     <div class="form-group">
                         <label for="fleet_number">Fleet Number: *</label>
-                        <input type="text" class="form-control" name="fleet_number" id="fleet_number">
+                        <input type="number" class="form-control" name="fleet_number" id="fleet_number">
                     </div>
                     <!-- /fleet name -->
 
