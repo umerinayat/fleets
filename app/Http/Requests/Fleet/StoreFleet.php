@@ -26,7 +26,7 @@ class StoreFleet extends FormRequest
         return [
             'fleet_number' => 'integer|required|unique:fleets',
             'name' => 'string|required|unique:fleets',
-            'image' => 'required|image|mimes:jpg,png,jpeg,gif,svg|max:10240',
+            'image' => 'required',
         ];
     }
 }

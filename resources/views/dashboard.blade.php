@@ -1,199 +1,254 @@
-<x-app-layout>
-    @push('styles')
-    <style>
-        input[type=date] {
-            height: 32px;
+@extends('admin.layouts.master')
+
+@section('page-title')
+{{ __('Dashboard') }}
+@endsection
+
+@push('styles')
+<style>
+    .filter {
+        display: flex;
+        margin-bottom: 12px;
+        align-items: center;
+        margin-top: 16px;
+        padding: 8px;
+    }
+
+    .filter .date {
+        display: flex;
+        margin-right: 32px;
+        align-items: center;
+    }
+
+    .date .label {
+        margin-right: 12px;
+    }
+
+    .fleets-selection {
+        width: 280px;
+    }
+
+    @media screen and (max-width: 1020px) {
+        .filter {
+            flex-direction: column;
+            align-items: flex-start;
         }
 
-        .page-header {
+        .filter .date {
+            margin-bottom: 6px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            
         }
-    </style>
-    @endpush
-    
-    <div class="page-header">
-        <h2 class="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
-            Dashboard  
-        </h2>
-        <button @click="openModal" class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
-            Add Refuelling
-        </button>
+
+        .date input {
+            margin-left: 0px !important;
+            margin-top: 4px !important;
+        }
+
+
+        #filterBtn {
+            margin-top: 6px;
+            margin-left: 2px;
+        }
+    }
+</style>
+@endpush
+
+@section('main-content')
+
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+
+        <div class="d-sm-flex align-items-center justify-content-between">
+            <h3 class="m-0 font-weight-bold mb-0 text-gray-800"> {{ __('Fleets Refulling Readings') }} <i id="spinner" class="fa ml-3 fa-spinner fa-spin" style="font-size:24px;position:absolute;top:23px;display:none"> </i> </h3>
+
+            <a id="addNewTypeBtn" href="javascript:void(0)" class="d-sm-inline-block btn btn-sm btn-success btn-icon-split">
+                <span class="icon text-white-50">
+                    <i class="fas fa-box"></i>
+                </span>
+                <span class="text"> Add New Refuelling </span>
+            </a>
+        </div>
     </div>
-    
-    <h4 class="mb-4 text-lg font-semibold text-gray-600 dark:text-gray-300">
-        Fleets Refulling Readings:
-    </h4>
-    <div>
-        <div>Select Date:</div>
-        <input type="date" id="startDate">
-        <input type="date" id="endDate">
-        <select name="sfleet" class="fleets-selection" id="sfleet">
-            <option></option>
-            @foreach($fleets as $fleet)
-            <option value="{{ $fleet->id }}">
-                <div class="name">{{$fleet->fleet_number}}-{{$fleet->name}}</div>
-            </option>
-            @endforeach
-        </select>
-        <button class="btn" id="filterBtn">Reset</button>
+
+    <div class="filter">
+        <div class="date">
+            <div class="label">Select Date:</div>
+            <input type="date" id="startDate">
+            <input type="date" id="endDate" style="margin-left: 8px;">
+        </div>
+        <div>
+            <select name="sfleet" class="fleets-selection" id="sfleet">
+                <option></option>
+                @foreach($fleets as $fleet)
+                <option value="{{ $fleet->id }}">
+                    <div class="name">{{$fleet->fleet_number}}-{{$fleet->name}}</div>
+                </option>
+                @endforeach
+            </select>
+        </div>
+        <button class="btn ml-3" id="filterBtn">Reset</button>
     </div>
-    <div class="w-full mb-8 overflow-hidden rounded-lg shadow-xs">
-        <div class="w-full overflow-x-auto">
-            <table class="w-full whitespace-no-wrap" id="fleetsReadingDt">
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="typesTable" width="100%" cellspacing="0">
                 <thead>
-                    <tr class="text-xs font-semibold tracking-wide text-left text-gray-500 uppercase border-b dark:border-gray-700 bg-gray-50 dark:text-gray-400 dark:bg-gray-800">
-                        <th class="px-4 py-3">Fleet Number</th>
-                        <th class="px-4 py-3">Litter Per hr. Avg</th>
-                        <th class="px-4 py-3">Total Year Consumed</th>
-                        <th class="px-4 py-3">Operating Hours</th>
-                        <th class="px-4 py-3">Current Machine Hr.</th>
+                    <tr>
+                        <th>Fleet Number</th>
+                        <th>Litter Per hr. Avg</th>
+                        <th>Total Year Consumed</th>
+                        <th>Operating Hours</th>
+                        <th>Current Machine Hr.</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y dark:divide-gray-700 dark:bg-gray-800">
+                <tfoot>
+                    <tr>
+                        <th>Fleet Number</th>
+                        <th>Litter Per hr. Avg</th>
+                        <th>Total Year Consumed</th>
+                        <th>Operating Hours</th>
+                        <th>Current Machine Hr.</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+
+                    {{-- Dynamic --}}
 
                 </tbody>
             </table>
+
+
         </div>
-
     </div>
+</div>
 
-   
+<!-- Generic form for add / update  -->
+<div class="modal fade" id="typeModal" tabindex="-1" role="dialog" aria-labelledby="typeModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
 
-    <!-- Modal backdrop. This what you want to place close to the closing body tag -->
-    <div x-show="isModalOpen" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 z-30 flex items-end bg-black bg-opacity-50 sm:items-center sm:justify-center">
-        <!-- Modal -->
-        <div x-show="isModalOpen" x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 transform translate-y-1/2" x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0  transform translate-y-1/2" @click.away="closeModal" @keydown.escape="closeModal" class="w-full px-6 py-4 overflow-hidden bg-white rounded-t-lg dark:bg-gray-800 sm:rounded-lg sm:m-4 sm:max-w-xl" role="dialog" id="modal">
-            <!-- Remove header if you don't want a close icon. Use modal body to place modal tile. -->
-            <header class="flex justify-end">
-                <button class="inline-flex items-center justify-center w-6 h-6 text-gray-400 transition-colors duration-150 rounded dark:hover:text-gray-200 hover: hover:text-gray-700" aria-label="close" @click="closeModal">
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" role="img" aria-hidden="true">
-                        <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" fill-rule="evenodd"></path>
-                    </svg>
-                </button>
-            </header>
-            <!-- Modal body -->
-            <div class="mt-4 mb-6">
-                <!-- Modal title -->
-                <p class="mb-2 text-lg font-semibold text-gray-700 dark:text-gray-300">
-                    Add Refuelling
-                </p>
-                <!-- Modal description -->
-                <form method="POST" class="p-6" action="{{ route('refuelling.store') }}">
+        <form id="typeForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalHeading"></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
 
-                    @csrf
-                    <!-- fleet selection -->
-                    <div>
-                        <x-label for="fleet" :value="__('Select Fleet: *')" />
-                        <select name="fleet_id" class="fleets-selection" id="fleets-selection">
-                            <option></option>
-                            @foreach($fleets as $fleet)
-                            <option value="{{ $fleet->id }}">
-                                <div class="name">{{$fleet->fleet_number}}-{{$fleet->name}}</div>
-                            </option>
-                            @endforeach
-                        </select>
-                        @if ($errors->has('fleet_id'))
-                        <div class="mt-2" style="color:red">{{ $errors->first('fleet_id') }}</div>
-                        @endif
+                <div class="modal-body">
+
+                    <input type="hidden" name='ref_id' id="refId" />
+
+                    <!-- fleet  -->
+                    <div class="form-group">
+                        <label for="fleet_number">Select Fleet: *</label>
+                        <div>
+                            <select name="fleet_id" class="fleets-selection" id="fleets-selection">
+                                <option></option>
+                                @foreach($fleets as $fleet)
+                                <option value="{{ $fleet->id }}">
+                                    <div class="name">{{$fleet->fleet_number}}-{{$fleet->name}}</div>
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <!-- Fuel added -->
-                    <div class="mt-4">
-                        <x-label for="fuel_added" :value="__('Fuel added: (in Liters) *')" />
+                    <!-- /fleet -->
 
-                        <x-input id="fuel_added" step="0.01" class="block mt-1 w-full" type="number" name="fuel_added" :value="old('fuel_added')" />
-                        @if ($errors->has('fuel_added'))
-                        <div class="mt-2" style="color:red">{{ $errors->first('fuel_added') }}</div>
-                        @endif
+                    <!-- fuel_added -->
+                    <div class="form-group">
+                        <label for="fuel_added">Fuel added: (in Liters) *</label>
+                        <input type="number" step="0.01" class="form-control" name="fuel_added" id="fuel_added">
+                    </div>
+                    <!-- /fuel_added -->
+
+                    <!-- machine hours -->
+                    <div class="form-group">
+                        <label for="machine_hours">Machine Hours: *</label>
+                        <input type="number" step="0.01" class="form-control" name="machine_hours" id="machine_hours">
                     </div>
                     <!-- machine hours -->
-                    <div class="mt-4">
-                        <x-label for="machine_hours" :value="__('Machine Hours: *')" />
 
-                        <x-input id="machine_hours" step="0.01" class="block mt-1 w-full" type="number" name="machine_hours" :value="old('machine_hours')" />
-                        @if ($errors->has('machine_hours'))
-                        <div class="mt-2" style="color:red">{{ $errors->first('machine_hours') }}</div>
-                        @endif
+                    <!-- location -->
+                    <div class="form-group">
+                        <label for="location">Location: *</label>
+                        <input type="text" class="form-control" name="location" id="location">
                     </div>
                     <!-- location -->
-                    <div class="mt-4">
-                        <x-label for="location" :value="__('Location: *')" />
 
-                        <x-input id="location" class="block mt-1 w-full" type="text" name="location" :value="old('location')" />
-                        @if ($errors->has('location'))
-                        <div class="mt-2" style="color:red">{{ $errors->first('location') }}</div>
-                        @endif
-                    </div>
 
                     <!-- date -->
-                    <div class="mt-4">
-                        <x-label for="date" :value="__('Date: *')" />
-
-                        <x-input id="date" class="block mt-1 w-full" type="date" name="date" :value="old('date')" />
-                        @if ($errors->has('date'))
-                        <div class="mt-2" style="color:red">{{ $errors->first('date') }}</div>
-                        @endif
+                    <div class="form-group">
+                        <label for="date">Date: *</label>
+                        <input type="date" class="form-control" name="date" id="date">
                     </div>
+                    <!-- date -->
 
                     <!-- isTankFilled -->
-                    <div class="mt-4">
-                        <x-label for="isTankFilled" :value="__('Is Tank Filled:')" />
-
-                        <x-input id="isTankFilled" class="block mt-1" type="checkbox" name="isTankFilled" :value="old('isTankFilled')" />
-                        @if ($errors->has('isTankFilled'))
-                        <div class="mt-2" style="color:red">{{ $errors->first('isTankFilled') }}</div>
-                        @endif
+                    <div class="form-group">
+                        <label for="isTankFilled">Is Tank Filled:</label>
+                        <input type="checkbox" class="form-check-input ml-2" name="isTankFilled" id="isTankFilled">
                     </div>
-
-                    <button class="w-full px-5 py-3 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg sm:w-auto sm:px-4 sm:py-2 active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
-                  {{  __('Add') }}
-                </button>
+                    <!-- isTankFilled -->
 
 
-                </form>
+                    <div class="mt-2" id="errorsContainer"></div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" role="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary">Add</button>
+                </div>
+
             </div>
-            <footer class="flex flex-col items-center justify-end px-6 py-3 -mx-6 -mb-4 space-y-4 sm:space-y-0 sm:space-x-6 sm:flex-row bg-gray-50 dark:bg-gray-800">
-                <button @click="closeModal" class="w-full px-5 py-3 text-sm font-medium leading-5 text-white text-gray-700 transition-colors duration-150 border border-gray-300 rounded-lg dark:text-gray-400 sm:px-4 sm:py-2 sm:w-auto active:bg-transparent hover:border-gray-500 focus:border-gray-500 active:text-gray-500 focus:outline-none focus:shadow-outline-gray">
-                    Cancel
-                </button>
-               
-            </footer>
-        </div>
+        </form>
     </div>
-    <!-- End of modal backdrop -->
+</div>
+<!-- Generic form for add / update type -->
 
-    @push('scripts')
-    <script>
+@endsection
+
+@push('scripts')
+
+<script>
+    // document ready
+    $(document).ready(function() {
+
+
         const startDate = document.getElementById('startDate');
         const endDate = document.getElementById('endDate');
         const sfleet = document.getElementById('sfleet');
         const filterBtn = document.getElementById('filterBtn');
         let isFilter = false;
 
-        startDate.value = moment().startOf('quarter').subtract(1, 'year').format('YYYY-MM-DD');
-        endDate.value = moment().startOf('quarter').subtract(1, 'days').format('YYYY-MM-DD');
+        startDate.value = moment().startOf('quarter').format('YYYY-MM-DD');
+        endDate.value = moment().startOf('quarter').add(364, 'days').format('YYYY-MM-DD');
 
         filterBtn.addEventListener('click', function(event) {
             $("#sfleet").val('');
             $("#sfleet").trigger('change.select2');
-            startDate.value = moment().startOf('quarter').subtract(1, 'year').format('YYYY-MM-DD');
-            endDate.value = moment().startOf('quarter').subtract(1, 'days').format('YYYY-MM-DD');
-            $('#fleetsReadingDt').DataTable().ajax.reload();
+            startDate.value = moment().startOf('quarter').format('YYYY-MM-DD');
+            endDate.value = moment().startOf('quarter').add(364, 'days').format('YYYY-MM-DD');
+            $('#typesTable').DataTable().ajax.reload();
         });
 
         startDate.addEventListener('change', function() {
-            $('#fleetsReadingDt').DataTable().ajax.reload();
+            $('#typesTable').DataTable().ajax.reload();
         });
 
         endDate.addEventListener('change', function() {
-            $('#fleetsReadingDt').DataTable().ajax.reload();
+            $('#typesTable').DataTable().ajax.reload();
         });
 
 
 
         $('#sfleet').on('select2:select', function(e) {
-            $('#fleetsReadingDt').DataTable().ajax.reload();
+            $('#typesTable').DataTable().ajax.reload();
         });
 
 
@@ -229,51 +284,158 @@
             placeholder: 'Select a fleet'
         });
 
-        $(function() {
-            var table = $('#fleetsReadingDt').DataTable({
-                processing: true,
-                serverSide: true,
-                "bPaginate": false,
-                "bLengthChange": false,
-                "searching": false,
-                ajax: {
-                    url: "{{ route('dashboard') }}",
-                    "data": function(d) {
-                        d.sdate = startDate.value;
-                        d.edate = endDate.value;
-                        d.sfleet = sfleet.value
-                    },
+        $spinner = $('#spinner');
+
+        var Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            onOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        //init fleets DataTable
+        var typesDataTable = $('#typesTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('dashboard') }}",
+                "data": function(d) {
+                    d.sdate = startDate.value;
+                    d.edate = endDate.value;
+                    d.sfleet = sfleet.value
                 },
-                columns: [
-                    // {
-                    //     data: 'fleet_name',
-                    //     name: 'fleet_name'
-                    // },
-                    {
-                        data: 'fleet_number',
-                        name: 'fleet_number'
-                    },
-                    {
-                        data: 'littersPerHours',
-                        name: 'littersPerHours'
-                    },
-                    {
-                        data: 'totalFuelConsumption',
-                        name: 'totalFuelConsumption'
-                    },
-                    {
-                        data: 'operatingHours',
-                        name: 'operatingHours'
-                    },
-                    {
-                        data: 'currentMachineReading',
-                        name: 'currentMachineReading'
+            },
+            columnDefs: [
+
+            ],
+            columns: [
+
+                // {
+                //     data: 'fleet_name',
+                //     name: 'fleet_name'
+                // },
+                {
+                    data: 'fleet_number',
+                    name: 'fleet_number'
+                },
+                {
+                    data: 'littersPerHours',
+                    name: 'littersPerHours'
+                },
+                {
+                    data: 'totalFuelConsumption',
+                    name: 'totalFuelConsumption'
+                },
+                {
+                    data: 'operatingHours',
+                    name: 'operatingHours'
+                },
+                {
+                    data: 'currentMachineReading',
+                    name: 'currentMachineReading'
+                }
+            ]
+        });
+
+        var mode = 'add';
+
+
+        // Handle add new type 
+        $('#addNewTypeBtn').click(function() {
+            $('#errorsContainer').empty();
+            $('#submitBtn').text("Add");
+            $('#refId').val(0);
+            $('#typeForm').trigger("reset");
+            $('#modalHeading').html("Add Refuelling");
+            $('#typeModal').modal('show');
+            mode = 'add';
+        });
+        // END of handle add new type
+
+        // Hanlde add or update type
+
+        $('#submitBtn').click(function(e) {
+
+            e.preventDefault();
+
+            // disable submit button
+            $('#submitBtn').prop('disabled', true);
+            $spinner.css('display', 'inline-block');
+
+            $(this).html('Processing..');
+
+            if (mode == 'add') {
+                var url = '/refuelling';
+                var method = 'post';
+            } else {}
+
+            axios({
+                method,
+                url,
+
+                data: $('#typeForm').serialize()
+
+            }).then(function(response) {
+
+                var data = response.data;
+                $spinner.css('display', 'none');
+
+                if (data.success) {
+
+                    $('#typeForm').trigger("reset");
+                    $('#typeModal').modal('hide');
+                    typesDataTable.draw();
+
+                    Toast.fire({
+                        icon: 'success',
+                        title: data.message
+                    });
+
+                    // enable submit button
+                    $('#submitBtn').prop('disabled', false);
+
+
+                }
+
+            }).catch(function({
+                response
+            }) {
+
+                if (response.status == 422) {
+                    var html = '<div class="alert alert-danger">';
+
+                    for (const key in response.data.errors) {
+                        html += '<p>' + response.data.errors[key][0] + '</p>';
                     }
 
+                    html += '</div>';
+                    $('#errorsContainer').html(html);
 
-                ]
+                    $('#submitBtn').html('Add refuelling');
+                    // enable submit button
+                    $('#submitBtn').prop('disabled', false);
+                }
+
+                // error  
+                $('#submitBtn').html('Add refuelling');
+                // enable submit button
+                $('#submitBtn').prop('disabled', false);
+                $spinner.css('display', 'none');
+
             });
         });
-    </script>
-    @endpush
-</x-app-layout>
+
+        // END of Hanlde add or update type
+
+
+
+
+    });
+</script>
+
+@endpush

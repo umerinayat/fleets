@@ -23,15 +23,16 @@ class UserController extends Controller
             $users = User::orderBy('id', 'DESC');
             return Datatables::of($users)->addIndexColumn()
                 ->addColumn('action', function($row){
-                    $id =  $row->id;
-                    $token = csrf_token();
-                    $formId = "'form'";
+                    
+                    $buttons = '';
+
                     if( ! $row->hasRole('admin') ) {
-                        $editIcon = '<i class="fa-solid fa-pen edit-icon icon"></i><form style="display:inline" method="post" action="/users/'.$id.'"><i onclick="this.closest('.$formId.').submit();" class="fa-solid fa-trash trash-icon icon"></i><input type="hidden" name="_token" value="'.$token.'"><input type="hidden" name="_method" value="delete"></form>';
-                        return $editIcon;
-                    } else {
-                        return 'Admin';
-                    }
+                        $buttons .= "<span style='font-size:1.6em;color:red' class='mdi mdi-trash-can-outline ml-2 delete-user-btn c-icon'  data-id='$row->id' id='$row->id'></span>";
+                    } 
+
+                    $buttons .= "<span style='font-size:1.6em;color:green' class='mdi mdi-square-edit-outline edit-user-btn c-icon ml-2'  data-id='$row->id' id='$row->id'></span>";
+
+                    return $buttons;
                 })
                 ->rawColumns(['action'])
                 ->make(true);
@@ -68,7 +69,11 @@ class UserController extends Controller
 
         $user->assignRole($role);
 
-        return redirect('/users');
+        return [
+            'success' => true,
+            'message' => 'New User Added',
+            'user' => $user
+        ];
     }
 
     /**
@@ -90,7 +95,11 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        //
+        return [
+            'success' => true,
+            'message' => 'Fleet Updated',
+            'user' => $user->load('roles')
+        ];
     }
 
     /**
@@ -102,7 +111,21 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
-        //
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);   
+
+        // $role = Role::findByName($request->role);
+
+        $user->syncRoles([$request->role]);
+
+        return [
+            'success' => true,
+            'message' => 'User Updated',
+            'user' => $user
+        ];
     }
 
     /**
@@ -115,6 +138,10 @@ class UserController extends Controller
     {
         $user->delete();
 
-        return redirect('/users');
+        return [
+            'success' => true,
+            'message' => 'User Deleted!',
+            'deletedUser' => $user,
+        ];
     }
 }

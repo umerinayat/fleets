@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Refuelling\StoreRefuelling;
 use App\Http\Requests\Refuelling\UpdateRefuelling;
 use App\Models\Refuelling;
+use App\Models\Fleet;
 use Illuminate\Http\Request;
 use DataTables;
 
@@ -17,16 +18,21 @@ class RefuellingController extends Controller
      */
     public function index(Request $request)
     {
+        $data = [];
+
+        $fleets = Fleet::orderBy('created_at', 'DESC')->get();
+        
+        $data['fleets'] = $fleets;
+
         if ( $request->ajax() ) 
         {
-            $refuellings = Refuelling::whereHas('fleet')->with('fleet');
+            $refuellings = Refuelling::whereHas('fleet')->with('fleet')->orderBy('id', 'DESC');
             return Datatables::of($refuellings)->addIndexColumn()
                 ->addColumn('action', function($row){
-                    $id =  $row->id;
-                    $token = csrf_token();
-                    $formId = "'form'";
-                    $editIcon = '<i class="fa-solid fa-pen edit-icon icon"></i><form style="display:inline" method="post" action="/refuelling/'.$id.'"><i onclick="this.closest('.$formId.').submit();" class="fa-solid fa-trash trash-icon icon"></i><input type="hidden" name="_token" value="'.$token.'"><input type="hidden" name="_method" value="delete"></form>';
-                    return $editIcon;
+                    $buttons = "<span style='font-size:1.6em;color:green' class='mdi mdi-square-edit-outline edit-ref-btn c-icon'  data-id='$row->id' id='$row->id'></span>";
+                    $buttons .= "<span style='font-size:1.6em;color:red' class='mdi mdi-trash-can-outline ml-2 delete-ref-btn c-icon'  data-id='$row->id' id='$row->id'></span>";
+
+                    return $buttons;
                 })
                 ->addColumn('isTankFilled', function($row){
                     return $row->isTankFilled == 1 ? 'YES' : 'NO';
@@ -41,7 +47,7 @@ class RefuellingController extends Controller
                 ->make(true);
         }
 
-        return view('refuellings.index');
+        return view('refuellings.index', $data);
     }
 
     /**
@@ -65,7 +71,7 @@ class RefuellingController extends Controller
 
         $isTankFilled = $request->has('isTankFilled') ? 1 : 0;
 
-        Refuelling::create([
+        $refuelling = Refuelling::create([
             'fleet_id' => $request->fleet_id,
             'machine_hours' => $request->machine_hours,
             'fuel_added' =>  $request->fuel_added,
@@ -74,7 +80,11 @@ class RefuellingController extends Controller
             'isTankFilled' => $isTankFilled
         ]);
 
-        return redirect('/');
+        return [
+            'success' => true,
+            'message' => 'New Refuelling Added',
+            'refuelling' => $refuelling
+        ];
     }
 
     /**
@@ -96,7 +106,7 @@ class RefuellingController extends Controller
      */
     public function edit(Refuelling $refuelling)
     {
-        //
+        return ['success' => true, 'refuelling' => $refuelling];
     }
 
     /**
@@ -108,7 +118,22 @@ class RefuellingController extends Controller
      */
     public function update(UpdateRefuelling $request, Refuelling $refuelling)
     {
-        //
+        $isTankFilled = $request->has('isTankFilled') ? 1 : 0;
+
+        $refuelling->update([
+            'fleet_id' => $request->fleet_id,
+            'machine_hours' => $request->machine_hours,
+            'fuel_added' =>  $request->fuel_added,
+            'location' => $request->location,
+            'date' => $request->date,
+            'isTankFilled' => $isTankFilled
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Refuelling Updated',
+            'refuelling' => $refuelling
+        ];
     }
 
     /**
@@ -121,6 +146,10 @@ class RefuellingController extends Controller
     {
         $refuelling->delete();
 
-        return redirect('/refuelling');
+        return [
+            'success' => true,
+            'message' => 'Refuelling Deleted!',
+            'deletedRefuelling' => $refuelling,
+        ];
     }
 }
